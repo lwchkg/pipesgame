@@ -1,14 +1,66 @@
-<html>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>Pipes</title>
+		<script type="text/javascript" src="scripts/game.js"></script>
+		<script type="text/javascript" src="scripts/board.js"></script>
+		<script type="text/javascript" src="scripts/timer.js"></script>
+		<script type="text/javascript" src="scripts/control.js"></script>
+		<script type="text/javascript" src="scripts/pipes.js"></script>
 		<style type="text/css">
+.t{}
+		</style>
+		<style type="text/css">
+body {font-family: arial, sans-serif}
+.t {position: absolute; overflow: hidden; background-repeat: no-repeat}
+.t1 {position: absolute; top: 0px; width:200px; height:1px}
+.menu h1 {font-size: 125%}
+.menu {font-size: 75%}
+.menu hr {border: none; border-top: 1px solid black}
+
+.won {background-color: yellow}
 		</style>
 	</head>
-	<body>
-		<div style="position:absolute; width:300px;" id="gameContent"></div>
-		<script src="scripts/boilerplate.js"></script>
-		<script src="scripts/standardgamestates.js"></script>
+	<body style="margin:0; padding:0" onload="init()" onkeydown="return controller.eventprocess(event)" onkeypress="controller.eventprocess(event)">
+		<div style="position: fixed; border-left: 1px solid black; right: 0; width: 200px; height: 100%; z-index: 1; background-color: white; overflow: auto">
+			<div class="menu" style="padding: 8px">
+				<img src="images/logo.png" />
+				<p style="font-size: 75%; margin: 0; padding: 0">Copyright 2010 WC Leung.<br />Released under <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3</a></p>
+				<h1>Size of Playing Area:</h1>
+				<p>
+				<select id="sizeselect" name="sizeselect" size="7" onchange="form_size()">
+					<option value="4x4">Tiny (4x4)</option>
+					<option value="8x8" selected="selected">Small (8×8)</option>
+					<option value="16x16">Medium (16×16)</option>
+					<option value="32x32">Large (32×32)</option>
+					<option value="64x64">Huge (64x64)</option>
+					<option value="100x100">Max (100x100)</option>
+					<option value="custom">Custom ...</option>
+				</select><br />
+				<input id="hsize" name="hsize" type="text" value="8" size="3" disabled="disabled" /> ×
+				<input id="vsize" name="vsize" type="text" value="8" size="3" disabled="disabled" /><br />
+				<input type="button" value="New Game" onclick="newgame(); this.blur();">
+				</p>
 
-		<script src="scripts/pipes.js"></script>
+				<hr />
+
+				<h1>Tile Size (in pixels)</h1>
+				<p id="tileset_placeholder"></p>
+
+				<hr />
+
+				<h1>Timer</h1>
+				<div id="timer" style="font-size: 40px; border: 1px solid black; text-align: center">00:00:00</div>
+
+				<hr />
+				<h1>Control</h1>
+				<p id="controlset_placeholder"></p>
+				<div id="controlset_desc"></div>
+			</div>
+		</div>
+		<div style="position:absolute" id="gameContent" oncontextmenu="return false;" onmouseup="controller.eventprocess(event)" onmousedown="controller.eventprocess(event)" onclick="controller.eventprocess(event)" ondblclick="controller.eventprocess(event)" onmouseover="controller.eventprocess(event)" onmouseout="controller.eventprocess(event)"></div>
 	</body>
 </html>

@@ -1,409 +1,91 @@
-globals.board=null;
-globals.timer=0;
+﻿/*
+The Pipes Game
+Copyright (C) 2010  WC Leung
 
-constants.minimumBoardSize=4;
-constants.maximumBoardSize=100;
-constants.deltaX=[0,1,0,-1];
-constants.deltaY=[-1,0,1,0];
-constants.opposite=[2,3,0,1];
+This file is part of The Pipes Game.
 
-globals.title="Pipes";
-globals.instructions="Rotate the cells until all cells in the grid are interconnected and 'lit' (colored green).  To rotate a cell, simply click on it.  To 'lock' or 'unlock' a cell(locked cells are colored differently), hold down control while clicking.";
+The Pipes Game is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+The Pipes Game is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with The Pipes Game.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+globals = {}
 
 globals.tilesets = [
-{name:"Large", size:32, filename: "tileset2_32.png"},
-{name:"Middle", size:24, filename: "tileset2_24.png"},
+{name:"Very Large (96×96)", h:96, v:96, filename: "tileset_96.png"},
+{name:"Large (64×64)", h:64, v:64, filename: "tileset_64.png"},
+{name:"Medium (48×48)", h:48, v:48, filename: "tileset_48.png"},
+{name:"Small (32×32)", h:32, v:32, filename: "tileset_32.png"},
+{name:"Very Small (24×24)", h:24, v:24, filename: "tileset_24.png"}
 ];
-globals.tileset = globals.tilesets[1];
 
-function getCellElement(x,y)
+globals.tileset = globals.tilesets[0];
+
+board = 0;
+pipes_logic = 0;
+controller = 0;
+
+tiles = 0;
+menu_placeholder = 0;
+
+function newgame()
 {
-	return(document.getElementById("cell_"+x+"_"+y));
+	form_hsize = document.getElementById("hsize");
+	form_vsize = document.getElementById("vsize");
+
+	var hsize = parseInt(form_hsize.value);
+	var vsize = parseInt(form_vsize.value);
+
+	pipes_logic.generate(hsize, vsize);
+	pipes_logic.scramble();
+	pipes_logic.light(undefined, undefined);
+
+	startTimer();
+	document.getElementById("timer").className = "";
 }
 
-function clickCell(x,y,event)
-{
-	if(event.ctrlKey)
-	{
-		globals.board.getCell(x,y).locked = !globals.board.getCell(x,y).locked;
-		globals.board.getCell(x,y).update();
-	}
-	else
-	{
-		globals.board.turnCell(x,y);
-	}
-}
+function form_size() {
+	form_sizeselect = document.getElementById("sizeselect");
+	form_hsize = document.getElementById("hsize");
+	form_vsize = document.getElementById("vsize");
 
-generator["play"]=function()
-{
+	size = form_sizeselect.value;
 
-	if (globals.board.width <= 20 && globals.board.height <= 20) {
-		globals.tileset = globals.tilesets[0];
+	if (size == "custom") {
+		form_hsize.disabled = false;
+		form_vsize.disabled = false;
 	} else {
-		globals.tileset = globals.tilesets[1];
-	}
+		form_hsize.disabled = true;
+		form_vsize.disabled = true;
 
-	var result="";
-	var size=globals.tileset.size;
-	var s = document.styleSheets[0];
-	if (s.insertRule) {
-		s.insertRule(".tile {position: absolute; width: "+size+"px; height: "+size+"px; overflow: hidden; background-image:url('images/"+ globals.tileset.filename +"'); }", 0);
-	} else {
-		s.addRule(".tile", "position: absolute; width: "+size+"px; height: "+size+"px; overflow: hidden; background-image:url('images/"+ globals.tileset.filename +"');", 0);
-	}
-
-	for(var y=0;y<globals.board.height;++y)
-	{
-		for(var x=0;x<globals.board.width;++x)
-		{
-			value = globals.board.getCell(x,y).getValue();
-			globals.board.getCell(x,y).oldValue = value;
-			result += '<div class="tile" style="left: ' + (x*size) + 'px; top: ' + (y*size) + 
-					'px; background-position: ' + (-(value&15)*size) + 'px ' + (-Math.floor(value/16)*size) +
-					'px;" id="cell_'+x+'_'+y+'" onmouseup="clickCell('+x+","+y+
-					",event);\" onmouseover=\"globals.board.setCellSelected("+x+","+y+
-					",true);\" onmouseout=\"globals.board.setCellSelected("+x+","+y+
-					",false)\"></div>";
-		}
-	}
-	result+="<div style=\"position:absolute;top:"+globals.board.height*size+"\">";
-	result+="<p id=\"timer\">Time: "+globals.timer+"</p>";
-	result+="</div>";
-	return(result);
-}
-
-function Cell(x,y)
-{
-	this.x=x;
-	this.y=y;
-	this.locked = false;
-	this.selected = false;
-	this.lit = false;
-	this.neighbors = [null, null, null, null];
-	this.directions = [false, false, false, false];
-	this.oldValue = -1;
-
-	this.update=function()
-	{
-		var value=this.getValue();
-		var size=globals.tileset.size;
-		if (value == this.oldValue) return;
-
-		this.oldValue = value;
-		var cellImage = getCellElement(this.x,this.y);
-		if(cellImage!=null)
-		{
-			cellImage.style.backgroundPosition = (-(value&15)*size) + 'px ' + (-Math.floor(value/16)*size) + 'px';
-		}
-	}
-
-	this.getValue=function()
-	{
-		return(
-			(this.directions[0]?(1):(0))+
-			(this.directions[1]?(2):(0))+
-			(this.directions[2]?(4):(0))+
-			(this.directions[3]?(8):(0))+
-			(this.lit?(16):(0))+
-			(this.locked?(32):(0))+
-			(this.selected?(64):(0))
-		);
-	}
-
-	this.rotateCW=function()
-	{
-		var temp=this.directions[3];
-		for(var index=3; index>0; index--)
-		{
-			this.directions[index]=this.directions[index-1];
-		}
-		this.directions[0]=temp;
-	}
-
-	this.rotateCCW=function()
-	{
-		var temp=this.directions[0];
-		for(var index=0; index<3; index++)
-		{
-			this.directions[index]=this.directions[index+1];
-		}
-		this.directions[3]=temp;
-	}
-
-	this.scramble=function()
-	{
-		var turns=new Array();
-		if ((this.getValue() & 15) == 15) {
-			this.locked=true;
-		}
-		else {
-			for (turns = Math.floor(Math.random()*4); turns>0; turns--) this.rotateCW();
-		}
-	}
-
-	this.light=function()
-	{
-		if(!this.lit)
-		{
-			this.lit=true;
-			for(var direction=0; direction<4; direction++)
-			{
-				if (this.directions[direction] && this.neighbors[direction]!=null && this.neighbors[direction].directions[constants.opposite[direction]])
-				{
-					this.neighbors[direction].light();
-				}
-			}
-		}
+		size = size.split("x");
+		form_hsize.value=size[0];
+		form_vsize.value=size[1];
 	}
 }
 
-function Board(width,height)
-{
-	this.pr = 0;
-
-	this.width=width;
-	this.height=height;
-	this.numCells=width*height;
-	this.genCount=0;
-	this.genNextList=new Array();
-	this.cells = new Array();
-	var y;
-	var x;
-
-	for(y=0;y<height;++y)
-	{
-		this.cells.push(new Array());
-		for(x=0;x<width;++x)
-		{
-			this.cells[y].push(new Cell(x,y));
-            if(y>0)
-            {
-                this.cells[y][x].neighbors[0]=this.cells[y-1][x];
-                this.cells[y-1][x].neighbors[2]=this.cells[y][x];
-            }
-            if(x>0)
-            {
-                this.cells[y][x].neighbors[3]=this.cells[y][x-1];
-                this.cells[y][x-1].neighbors[1]=this.cells[y][x];
-            }
-		}
+function addTilesetChooser() {
+	var s = '<select id="tileset_select" onchange="board.replaceTileset(this.value); this.blur()">';
+	var c = globals.tilesets.length;
+	for (var i=0; i<c; i++) {
+		s += '<option value="' + i + '">' + globals.tilesets[i].name + '</option>';
 	}
-
-	this.setCellSelected = function (x,y,value)
-	{
-	    this.getCell(x,y).selected=value;
-	    this.getCell(x,y).update();
-	}
-
-	this.turnCell = function (x,y)
-	{
-		if(this.getCell(x,y).locked) return;
-		this.getCell(x,y).rotateCW();
-		this.light();
-		if(this.getLitCount() == this.numCells) 
-		{
-			this.setCellSelected(x,y,false);
-			clearInterval(globals.timerId);
-			setGameState("solved");
-		}
-		this.update();
-	}
-
-	this.getCell=function(x,y)
-	{
-		return(this.cells[y][x]);
-	}
-
-	this.getLitCount=function()
-	{
-		var result=0;
-		for(var y=0;y<this.height;++y)
-		{
-			for(var x=0;x<this.width;++x)
-			{
-				if(this.getCell(x,y).lit) result++;
-			}
-		}
-		return(result);
-	}
-
-	this.clearLights=function()
-	{
-		for(var y=0;y<this.height;++y)
-		{
-			for(var x=0;x<this.width;++x)
-			{
-				this.getCell(x,y).lit=false;
-			}
-		}
-	}
-
-	this.update=function()
-	{
-		for(var y=0;y<this.height;++y)
-		{
-			for(var x=0;x<this.width;++x)
-			{
-				this.getCell(x,y).update();
-			}
-		}
-	}
-
-	this.scramble=function()
-	{
-		for(var y=0;y<this.height;++y)
-		{
-			for(var x=0;x<this.width;++x)
-			{
-				this.getCell(x,y).scramble();
-			}
-		}
-	}
-
-	this.light=function()
-	{
-		this.clearLights();
-		this.getCell(Math.floor(this.width/2),Math.floor(this.height/2)).light();
-	}
-
-	this.generate=function()
-	{
-		
-		if (this.genCount == 0)
-		{
-			// set first lit cell if not already have
-			var x=Math.floor(Math.random()*this.width);
-			var y=Math.floor(Math.random()*this.height);
-			this.getCell(x,y).lit=true;
-			this.genNextList.push([x, y]);
-			this.genCount++;
-			// pass through
-		}
-
-		for(i=0;i<10000;i++)
-		{
-			if(this.genCount < this.numCells)
-			{
-				r = Math.floor(Math.random()*this.genNextList.length);
-				x = this.genNextList[r][0];
-				y = this.genNextList[r][1];
-				//if(++this.pr < 10) alert(x + " " + y); // debug (generate message for <10 times)
-
-				var passable=new Array(4);
-				var found=false;
-				for(direction=0; direction<4; direction++)
-				{
-					if(this.getCell(x,y).neighbors[direction]==null) continue;
-					if(this.getCell(x,y).neighbors[direction].lit) continue;
-					passable[direction]=true;
-					found=true;
-				}
-				if(found)
-				{
-					if (direction.length == 1) this.genNextList[r] = this.genNextList.pop();
-					do {
-							direction=Math.floor(Math.random()*passable.length);
-					} while(!passable[direction]);
-					this.getCell(x,y).directions[direction]=true;
-					x+=constants.deltaX[direction];
-					y+=constants.deltaY[direction];
-					direction=constants.opposite[direction];
-					this.getCell(x,y).directions[direction]=true;
-					this.getCell(x,y).lit=true;
-					this.genNextList.push([x, y]);
-					this.genCount++;
-				}
-				else
-				{
-					if (direction.length == 1) this.genNextList[r] = this.genNextList.pop();
-				}
-			}
-			else
-			{
-				return(true);
-			}
-		}
-		return(true);
-	}
+	s += '</select>';
+	document.getElementById("tileset_placeholder").innerHTML = s;
 }
 
-generator["generate"]=function()
-{
-	var result="Generating Board...."+Math.floor(globals.board.genCount*100/globals.board.numCells)+"%";
-	setTimeout("generate()",0);
-	return(result);
+function init() {
+	addTilesetChooser();
+	board = new board_pro();
+	pipes_logic = new pipes_logic_pro();
+	controller = new controller_pro(0, "controller");
 }
-
-function incrementTimer()
-{
-	globals.timer++;
-	document.getElementById("timer").innerHTML="Time: "+globals.timer;
-}
-
-function generate()
-{
-	if (globals.board.genCount >= globals.board.numCells)
-	{
-		//globals.board.clearLights();
-		globals.board.scramble();
-		globals.board.light();
-		setGameState("play");
-		//globals.board.update();
-		globals.timer=0;
-		globals.timerId=setInterval("incrementTimer();",1000);
-	}
-	else
-	{
-		while(!globals.board.generate()){}
-		refreshGameState();
-	}
-}
-
-function startGame()
-{
-	var size=Number(document.getElementById("boardSize").value);
-	globals.board=new Board(size,size);
-	globals.board.genCount=0;
-	globals.board.genNextList=[];
-	setGameState("generate");
-}
-
-generator["solved"]=function()
-{
-	var result="";
-	var size=globals.tileset.size;
-	for(var y=0;y<globals.board.height;++y)
-	{
-		for(var x=0;x<globals.board.width;++x)
-		{
-			value = globals.board.getCell(x,y).getValue();
-			result += '<div class="tile" style="left: ' + (x*size) + 'px; top: ' + (y*size) + 
-					'px; background-position: ' + (-(value&15)*size) + 'px ' + (-Math.floor(value/16)*size) +
-					'px;" id="cell_'+x+'_'+y+'" onclick="clickCell('+x+","+y+
-					",event);\" onmouseover=\"globals.board.setCellSelected("+x+","+y+
-					",true);\" onmouseout=\"globals.board.setCellSelected("+x+","+y+
-					",false)\"></div>";
-		}
-	}
-	result+="<div style=\"position:absolute;top:"+globals.board.height*size+"\">";
-	result+="<p id=\"timer\">Total Time: "+globals.timer+"</p>";
-    result+="<p>Play again?<button onclick=\"setGameState('start');\">Yes</button><button onclick=\"setGameState('confirmquit');\">No</button></p>";
-	result+="</div>";
-	return(result);
-}
-
-generator["start"]=function()
-{
-	var result="";
-	result+="<p>Select Board Size:";
-	result+="<select id=\"boardSize\">";
-	for(var index=constants.minimumBoardSize;index<=constants.maximumBoardSize;++index)
-	{
-		result+="<option value=\""+index+"\""+((globals.board!=null&&index==globals.board.width)?(" selected"):(""))+">"+index+"x"+index;
-	}
-	result+="</select>";
-	result+="<button onclick=\"startGame();\">Start Game</button>";
-	result+="</p>";
-	return(result);
-}
-setGameState("title");
