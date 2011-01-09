@@ -21,6 +21,10 @@ along with The Pipes Game.  If not, see <http://www.gnu.org/licenses/>.
 function pipes_logic_pro() {
 }
 pipes_logic_pro.prototype = {
+
+	minsize: 1,
+	maxsize: 100,
+
 	cx: 0,
 	cy: 0,
 
@@ -295,5 +299,137 @@ pipes_logic_pro.prototype = {
 				this.pieces[x][y] = i;
 			}
 		}
+	},
+
+	// Save data in object obj. Only relevant properties are added
+	save: function(obj) {
+		var hsize = this.hsize;
+		var vsize = this.vsize;
+
+		if (this.hsize < 1 || this.vsize < 1) return false;
+		props = ["hsize", "vsize", "cx", "cy", "cursorx", "cursory"];
+		for (i in props) {
+			obj[props[i]] = this[props[i]];
+		}
+
+		var pieces = "";
+		var states = "";
+		for (var y = 0; y < vsize; y++) {
+			for (var x = 0; x < hsize; x++) {
+				pieces += this.pieces[x][y].toString(16);
+				states += this.states[x][y].toString(16);
+			}
+			if (y + 1 < vsize) {
+				pieces += "_";
+				states += "_";
+			}
+		}
+
+		obj.pieces = pieces;
+		obj.states = states;
+		return true;
+	},
+
+	load: function(obj) {
+		var hsize, vsize, cx, cy, cursorx, cursory, pieces_l, states_l
+		// validate data
+		try {
+			hsize = parseInt(obj.hsize);
+			if (hsize < this.minsize || hsize > this.maxsize)
+				throw ("hsize is invalid");
+
+			vsize = parseInt(obj.hsize);
+			if (vsize < this.minsize || vsize > this.maxsize)
+				throw ("vsize is invalid");
+
+			cx = parseInt(obj.cx);
+			if (cx < 0 || cx >= hsize)
+				throw ("cx is invalid");
+
+			cy = parseInt(obj.cy);
+			if (cy < 0 || cy >= vsize)
+				throw ("cy is invalid");
+
+			cursorx = parseInt(obj.cursorx);
+			if (cursorx < -1 || cursorx >= hsize)
+				throw ("cursorx is invalid");
+
+			cy = parseInt(obj.cy);
+			if (cursory < -1 || cursory >= vsize)
+				throw ("cursory is invalid");
+
+			pieces_l = obj.pieces.split("_");
+			if (pieces_l.length != vsize)
+				throw ("pieces contains an incorrect number of lines");
+
+			states_l = obj.states.split("_");
+			if (states_l.length != vsize)
+				throw ("states contains an incorrect number of lines");
+
+			var pieces_check = new RegExp("^[0-9a-f]{" + hsize + "}$");
+			var states_check = new RegExp("^[0-9a-f]{" + hsize + "}$");
+
+			for (var i=0; i<vsize; i++) {
+				if (!pieces_check.test(pieces_l[i]))
+					throw ("pieces contains an error in line " + i);
+				if (!states_check.test(states_l[i]))
+					throw ("states contains an error in line " + i);
+			}
+		} catch(e) {
+			// validate fail: alert and quit
+			alert("Unable to load save data.\nReason: " + e + "\n\nYou may start a new game instead.\n\nIf you are using Internet Explorer, please press\n\"Load from URL\" and paste the URL there.");
+			return false;
+		}
+
+		// write data after validation
+		this.hsize = hsize;
+		this.vsize = vsize;
+
+		this.pieces = new Array(hsize);
+		this.states = new Array(hsize);
+
+		for (var x=0; x < hsize; x++) {
+			this.pieces[x] = new Array(vsize);
+			this.states[x] = new Array(vsize);
+		}
+
+		for (var y = 0; y < vsize; y++) {
+			for (var x = 0; x < hsize; x++) {
+				this.pieces[x][y] = parseInt(pieces_l[y].charAt(x), 16);
+				this.states[x][y] = parseInt(states_l[y].charAt(x), 16);
+			}
+		}
+
+		var won = this.light(cx, cy);
+		this.setCursor(cursorx, cursory);
+		this.moveCursor(0, 0);
+
+		if (!won) {
+			startTimer();
+			document.getElementById("timer").className = "";
+		}
+
+		var form_sizeselect = document.getElementById("sizeselect");
+		var form_hsize = document.getElementById("hsize");
+		var form_vsize = document.getElementById("vsize");
+
+		var size = hsize + "x" + vsize;
+
+		for (i=0; i<form_sizeselect.options.length; i++) {
+			if (size == form_sizeselect.options[i].value) {
+				form_sizeselect.value = size;
+				form_hsize.disabled = true;
+				form_vsize.disabled = true;
+				return true;
+			}
+		}
+
+		form_sizeselect.value = "custom";
+		form_hsize.value = hsize;
+		form_vsize.value = vsize;
+		form_hsize.disabled = false;
+		form_vsize.disabled = false;
+
+		return true;
 	}
 }

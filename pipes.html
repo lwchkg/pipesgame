@@ -9,6 +9,7 @@
 		<script type="text/javascript" src="scripts/board.js"></script>
 		<script type="text/javascript" src="scripts/timer.js"></script>
 		<script type="text/javascript" src="scripts/control.js"></script>
+		<script type="text/javascript" src="scripts/io.js"></script>
 		<script type="text/javascript" src="scripts/pipes.js"></script>
 		<style type="text/css">
 .t{}
@@ -28,7 +29,7 @@ body {font-family: arial, sans-serif}
 		<div style="position: fixed; border-left: 1px solid black; right: 0; width: 200px; height: 100%; z-index: 1; background-color: white; overflow: auto">
 			<div class="menu" style="padding: 8px">
 				<img src="images/logo.png" />
-				<p style="font-size: 75%; margin: 0; padding: 0">Copyright 2010 WC Leung.<br />Released under <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3</a></p>
+				<p style="font-size: 75%; margin: 0; padding: 0">Copyright 2010-11 WC Leung.<br />Released under <a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL v3</a></p>
 				<h1>Size of Playing Area:</h1>
 				<p>
 				<select id="sizeselect" name="sizeselect" size="7" onchange="form_size()">
@@ -49,6 +50,7 @@ body {font-family: arial, sans-serif}
 
 				<h1>Tile Size (in pixels)</h1>
 				<p id="tileset_placeholder"></p>
+				<p id="loading_images" style="display: none">Loading images...</p>
 
 				<hr />
 
@@ -59,8 +61,17 @@ body {font-family: arial, sans-serif}
 				<h1>Control</h1>
 				<p id="controlset_placeholder"></p>
 				<div id="controlset_desc"></div>
+
+				<hr />
+				<h1>Save and Load</h1>
+				<input type="button" value="Save to Bookmarks" onclick="io.saveToBookmarks(); this.blur();">
+				<br />
+				<input type="button" value="Save to Clipboard" onclick="io.saveToClipboard(); this.blur();">
+				<br /><br />
+				<input type="button" value="Load from URL" onclick="io.loadPrompt(); this.blur();">
 			</div>
 		</div>
-		<div style="position:absolute" id="gameContent" oncontextmenu="return false;" onmouseup="controller.eventprocess(event)" onmousedown="controller.eventprocess(event)" onclick="controller.eventprocess(event)" ondblclick="controller.eventprocess(event)" onmouseover="controller.eventprocess(event)" onmouseout="controller.eventprocess(event)"></div>
+		<canvas width="1" height="1" style="position:absolute" id="gameContent" oncontextmenu="return false;" onselectstart="return false;" onmouseup="controller.eventprocess(event)" onmousedown="controller.eventprocess(event)" onclick="controller.eventprocess(event)" ondblclick="controller.eventprocess(event)" onmousemove="controller.eventprocess(event)" onmouseover="controller.eventprocess(event)" onmouseout="controller.eventprocess(event)"></canvas>
+		<div id="menu_placeholder" class="t1" style="left: 1px;"></div>
 	</body>
 </html>

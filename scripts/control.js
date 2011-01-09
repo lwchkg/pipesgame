@@ -28,10 +28,10 @@ controlsets = [
 
 			if (e.type == "mouseup") {
 				var t = e.target || e.srcElement;
-				t = t.id.split("_");
-				if (t[0] == "tile") {
-					var x = parseInt(t[1]);
-					var y = parseInt(t[2]);
+				if (t.id == "gameContent") {
+					var pos = board.getXY(e.pageX, e.pageY); // incomplete
+					var x = pos[0];
+					var y = pos[1];
 					switch (button)
 					{
 						case 1:
@@ -47,31 +47,28 @@ controlsets = [
 							break;
 					} 
 				}
-			} else if (e.type == "mouseover") {
+			} else if (e.type == "mousemove") {
 				var t = e.target || e.srcElement;
-				t = t.id.split("_");
-				if (t[0] == "tile") {
-					var x = parseInt(t[1]);
-					var y = parseInt(t[2]);
+				if (t.id == "gameContent") {
+					var pos = board.getXY(e.pageX, e.pageY); // incomplete
+					var x = pos[0];
+					var y = pos[1];
 					pipes_logic.setCursor(x, y);
 				}
 			} else if (e.type == "mouseout") {
 				var t = e.target || e.srcElement;
-				t = t.id.split("_");
-				if (t[0] == "tile") {
-					var x = parseInt(t[1]);
-					var y = parseInt(t[2]);
+				if (t.id == "gameContent") {
 					pipes_logic.setCursor(-1, -1);
 				}
 			}
-		},
+		}
 	},
 		{
 		name: "Keyboard",
 		desc: "<p><i>Arrow keys</i>: Move cursor</p><p><i>Space, Z</i>: Rotate piece clockwise</p><p><i>X</i>: Rotate piece counterclockwise</p><p><i>C</i>: Toggle highlight</p><p><i>V</i>: Start lighting here</p><p><i>Note: rotating a piece highlights it automatically</i></p>",
 		eventprocess: function(e) {
 			var t = (e.target || e.srcElement).tagName.toLowerCase();
-			if (e.type == "keydown" && (t == "html" || t == "body" || t == "div")) {
+			if (e.type == "keydown" && (t == "html" || t == "body" || t == "canvas")) {
 				var keyCode = e.keyCode;
 				if (keyCode == 39) { // right
 					pipes_logic.moveCursor( 1, 0);
@@ -96,7 +93,7 @@ controlsets = [
 			if (e.type == "keydown" && (t == "html" || t == "body")) {
 				if (keyCode >= 37 && keyCode <= 40 || keyCode == 32) return false;
 			}
-		},
+		}
 	}
 ];
 

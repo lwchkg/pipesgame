@@ -21,7 +21,7 @@ along with The Pipes Game.  If not, see <http://www.gnu.org/licenses/>.
 globals = {}
 
 globals.tilesets = [
-{name:"Very Large (96×96)", h:96, v:96, filename: "tileset_96.png"},
+//{name:"Very Large (96×96)", h:96, v:96, filename: "tileset_96.png"},
 {name:"Large (64×64)", h:64, v:64, filename: "tileset_64.png"},
 {name:"Medium (48×48)", h:48, v:48, filename: "tileset_48.png"},
 {name:"Small (32×32)", h:32, v:32, filename: "tileset_32.png"},
@@ -37,8 +37,7 @@ controller = 0;
 tiles = 0;
 menu_placeholder = 0;
 
-function newgame()
-{
+function newgame() {
 	form_hsize = document.getElementById("hsize");
 	form_vsize = document.getElementById("vsize");
 
@@ -47,16 +46,16 @@ function newgame()
 
 	pipes_logic.generate(hsize, vsize);
 	pipes_logic.scramble();
-	pipes_logic.light(undefined, undefined);
+	pipes_logic.light();
 
 	startTimer();
 	document.getElementById("timer").className = "";
 }
 
 function form_size() {
-	form_sizeselect = document.getElementById("sizeselect");
-	form_hsize = document.getElementById("hsize");
-	form_vsize = document.getElementById("vsize");
+	var form_sizeselect = document.getElementById("sizeselect");
+	var form_hsize = document.getElementById("hsize");
+	var form_vsize = document.getElementById("vsize");
 
 	size = form_sizeselect.value;
 
@@ -83,9 +82,29 @@ function addTilesetChooser() {
 	document.getElementById("tileset_placeholder").innerHTML = s;
 }
 
+// Function adapted from Ext JS. (w/ GPLv3 License) Proof of concept only.
+function createDelegate(func, obj, args, appendArgs){
+	var method = func;
+	return function() {
+		var callArgs = args || arguments;
+		if (appendArgs === true){
+			callArgs = Array.prototype.slice.call(arguments, 0);
+			callArgs = callArgs.concat(args);
+		} else if (appendArgs == parseInt(appendArgs)){
+			callArgs = Array.prototype.slice.call(arguments, 0); // copy arguments first
+			var applyArgs = [appendArgs, 0].concat(args); // create method call params
+			Array.prototype.splice.apply(callArgs, applyArgs); // splice them in
+		}
+		return method.apply(obj || window, callArgs);
+	};
+}
+
 function init() {
 	addTilesetChooser();
 	board = new board_pro();
 	pipes_logic = new pipes_logic_pro();
 	controller = new controller_pro(0, "controller");
+
+	if (window.location.search.length > 1)
+		io.loadgame(window.location.search.substr(1));
 }
