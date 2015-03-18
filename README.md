@@ -3,4 +3,4 @@ You are given a grid of pipes of different shapes. The aim of the game is to con
 
 You may connect the pipes by rotating the pieces only.
 
-Play the game now on https://cdn.rawgit.com/lwchkg/pipesgame/master/pipes.html
+[Play the game now](https://cdn.rawgit.com/lwchkg/pipesgame/master/pipes.html)
